@@ -2,30 +2,6 @@
 
 ![The official unofficial mascot of the class projects](images/derpydb-small.jpg)
 
-## Overview
-
-This repo contains my implementation for CS186 RookieDB projects. There is a [gitbook](https://cs186.gitbook.io/project/) for CS186 projects, but it may be updated each semester, so I cloned the 2021 spring version. You can find the projects handout that I used [here](./project-handout).
-
-The master branch contains a bare-bones database implementation, which supports
-executing simple transactions in series. This is the skeleton code you will use throughout the projects. In the assignments of
-this class, you will be adding support for
-B+ tree indices, efficient join algorithms, query optimization, multigranularity
-locking to support concurrent execution of transactions, and database recovery.
-
-## How to use
-
-My implementation for each project is in the corresponding branch as follows (you can use `git branch -a` to see them), you can `git checkout branch_name` to see my implementation for each project.
-
-| **Assignment**                                                                                | **Branch name** |
-|-----------------------------------------------------------------------------------------------|---------------------|
-| Skeleton code                                                | Master          |
-| [Project 2: B+ Trees](https://cs186.gitbook.io/project/assignments/proj2)                     | b_plus_tree |
-| [Project 3: Joins and Query Optimization](https://cs186.gitbook.io/project/assignments/proj3) | join_query_opt |
-| [Project 4: Concurrency](https://cs186.gitbook.io/project/assignments/proj4)                  | concurrency |
-| [Project 5: Recovery](https://cs186.gitbook.io/project/assignments/proj5)                     | recovery |
-
-To start your Rookiedb projects journey, first clone the skeleton code (i.e. master branch) , then follow the instruction below to set up your local development environment. When you  start one specific project, you can create a new branch from master then implement it to keep your code tree clean. 
-
 ## Setting up your local development environment
 
 You are free to use any text editor or IDE to complete the assignments, but **we
