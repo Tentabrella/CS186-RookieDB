@@ -69,6 +69,7 @@ values of certain types, whereas the `Type` class represents types used in the
 database.
 
 An example:
+
 ```java
 DataBox x = new IntDataBox(42); // The integer value '42'.
 Type t = Type.intType();        // The type 'int'.
@@ -155,7 +156,6 @@ made up of multiple DataBoxes (one for each column of the table it belongs to).
 
 The `RecordId` class identifies a single record in a table.
 
-
 The `PageDirectory` class is an implementation of a heap file that uses a page directory.
 
 #### table/stats
@@ -195,6 +195,7 @@ a transaction with `Database#beginTransaction`, then call some of
 `Transaction`'s numerous methods to perform selects, inserts, and updates.
 
 For example:
+
 ```java
 Database db = new Database("database-dir");
 
@@ -227,4 +228,3 @@ db.close();
 
 More complex queries can be found in
 [`src/test/java/edu/berkeley/cs186/database/TestDatabase.java`](src/test/java/edu/berkeley/cs186/database/TestDatabase.java).
-

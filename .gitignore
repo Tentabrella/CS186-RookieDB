@@ -25,3 +25,7 @@ target/*
 hw*.zip
 *.zip
 demo/*
+
+# ignore generated files of this project
+*.pdf
+*.dot

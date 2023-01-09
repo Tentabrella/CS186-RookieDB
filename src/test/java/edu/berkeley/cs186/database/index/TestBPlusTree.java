@@ -408,6 +408,55 @@ public class TestBPlusTree {
 
     @Test
     @Category(PublicTests.class)
+    public void testSimpleRandomPuts() {
+        List<DataBox> keys = new ArrayList<>();
+        List<RecordId> rids = new ArrayList<>();
+        List<RecordId> sortedRids = new ArrayList<>();
+        for (int i = 0; i < 10; ++i) {
+            keys.add(new IntDataBox(i));
+            rids.add(new RecordId(i, (short) i));
+            sortedRids.add(new RecordId(i, (short) i));
+        }
+
+        int d = 2;
+        Collections.shuffle(keys, new Random(42));
+        Collections.shuffle(rids, new Random(42));
+        BPlusTree tree = getBPlusTree(Type.intType(), d);
+        // Insert all the keys.
+        for (int i = 0; i < keys.size(); ++i) {
+            tree.put(keys.get(i), rids.get(i));
+        }
+        // Test get.
+        for (int i = 0; i < keys.size(); ++i) {
+            assertEquals(Optional.of(rids.get(i)), tree.get(keys.get(i)));
+        }
+    }
+
+    @Test
+    @Category(PublicTests.class)
+    public void testToPDF() {
+        List<DataBox> keys = new ArrayList<>();
+        List<RecordId> rids = new ArrayList<>();
+        List<RecordId> sortedRids = new ArrayList<>();
+        for (int i = 0; i < 100; ++i) {
+            keys.add(new IntDataBox(i));
+            rids.add(new RecordId(i, (short) i));
+            sortedRids.add(new RecordId(i, (short) i));
+        }
+
+        int d = 2;
+        Collections.shuffle(keys, new Random(42));
+        Collections.shuffle(rids, new Random(42));
+        BPlusTree tree = getBPlusTree(Type.intType(), d);
+        // Insert all the keys.
+        for (int i = 0; i < keys.size(); ++i) {
+            tree.put(keys.get(i), rids.get(i));
+        }
+        tree.toDotPDFFile("100Tree.pdf");
+    }
+
+    @Test
+    @Category(PublicTests.class)
     public void testRandomPuts() {
         // This test will generate 1000 keys and for trees of degree 2, 3 and 4
         // will scramble the keys and attempt to insert them.
@@ -484,5 +533,24 @@ public class TestBPlusTree {
         assertEquals(3, LeafNode.maxOrder(pageSizeInBytes, keySchema));
         assertEquals(3, InnerNode.maxOrder(pageSizeInBytes, keySchema));
         assertEquals(3, BPlusTree.maxOrder(pageSizeInBytes, keySchema));
+    }
+
+    @Test
+    @Category(PublicTests.class)
+    public void testDeleteAll() {
+        BPlusTree bPlusTree = getBPlusTree(Type.intType(), 4);
+        List<Pair<DataBox, RecordId>> inputList = new LinkedList<>();
+        for (int i = 0; i < 100; i++) {
+             inputList.add(new Pair<>(new IntDataBox(i), new RecordId(0, (short) i)));
+        }
+        Iterator<Pair<DataBox, RecordId>> iterator = inputList.iterator();
+        bPlusTree.bulkLoad(iterator, (float) (2.0/3.0));
+
+        for (int i = 0; i < 100; i++) {
+            bPlusTree.remove(new IntDataBox(i));
+        }
+
+        Iterator<RecordId> recordIdIterator = bPlusTree.scanAll();
+        assertEquals(false, recordIdIterator.hasNext());
     }
 }

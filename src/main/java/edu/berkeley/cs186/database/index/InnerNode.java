@@ -80,26 +80,66 @@ class InnerNode extends BPlusNode {
     // See BPlusNode.get.
     @Override
     public LeafNode get(DataBox key) {
-        // TODO(proj2): implement
-
-        return null;
+        int index = numLessThanEqual(key, keys);
+        BPlusNode child = this.getChild(index);
+        return child.get(key);
     }
 
     // See BPlusNode.getLeftmostLeaf.
     @Override
     public LeafNode getLeftmostLeaf() {
         assert(children.size() > 0);
-        // TODO(proj2): implement
-
-        return null;
+        BPlusNode child = this.getChild(0);
+        return child.getLeftmostLeaf();
     }
 
     // See BPlusNode.put.
     @Override
     public Optional<Pair<DataBox, Long>> put(DataBox key, RecordId rid) {
-        // TODO(proj2): implement
+        // get child's location and let child put the record
+        BPlusNode child = this.getChild(numLessThanEqual(key, keys));
+        // accept child's overflow point and response respectively
+        Optional<Pair<DataBox, Long>> overflow = child.put(key, rid);
+        if (!overflow.isPresent()) {
+            return Optional.empty();
+        } else {
+            // the child split, insert the pair
+            Pair<DataBox, Long> info = overflow.get();
+            return this.insert(info.getFirst(), info.getSecond());
+        }
+    }
 
-        return Optional.empty();
+    /**
+     * Insert a key, pageNum pair into inner node.
+     * Function will return empty if current node is not overflowed.
+     * Else, the current node will split and function will return the
+     * split key pointing to the new node.
+     * @param key
+     * @param pageNum
+     * @return the split key
+     */
+    private Optional<Pair<DataBox, Long>> insert(DataBox key, Long pageNum) {
+        //find place to insert key and pageNum
+        int index = numLessThanEqual(key, keys);
+        keys.add(index, key);
+        children.add(index + 1, pageNum);
+        //check if overflowed
+        if (keys.size() > metadata.getOrder() * 2) {
+            //yes, new a innerNode
+            DataBox splitKey = keys.get(metadata.getOrder());
+            List<DataBox> newKeys = keys.subList(metadata.getOrder() + 1, keys.size());
+            List<Long> newChildren = children.subList(metadata.getOrder() + 1, children.size());
+            keys = keys.subList(0, metadata.getOrder());
+            children = children.subList(0, metadata.getOrder() + 1);
+            //extract the split key
+            InnerNode sibling = new InnerNode(metadata, bufferManager, newKeys, newChildren, treeContext);
+            sync();
+            return Optional.of(new Pair<>(splitKey, sibling.getPage().getPageNum()));
+        } else {
+            //else sync and return Option.empty
+            sync();
+            return Optional.empty();
+        }
     }
 
     // See BPlusNode.bulkLoad.
@@ -107,7 +147,17 @@ class InnerNode extends BPlusNode {
     public Optional<Pair<DataBox, Long>> bulkLoad(Iterator<Pair<DataBox, RecordId>> data,
             float fillFactor) {
         // TODO(proj2): implement
-
+        while (data.hasNext()) {
+            // let the children bulkLoad and accept its pair
+            BPlusNode rightmostChild = this.getChild(this.children.size() - 1);
+            // if child split, add the pair into current
+            Optional<Pair<DataBox, Long>> overflow = rightmostChild.bulkLoad(data, fillFactor);
+            if (overflow.isPresent()) {
+                Pair<DataBox, Long> splitKeyInfo = overflow.get();
+                // if we need to split, return the new split key to parent
+                return insert(splitKeyInfo.getFirst(), splitKeyInfo.getSecond());
+            }
+        }
         return Optional.empty();
     }
 
@@ -115,7 +165,9 @@ class InnerNode extends BPlusNode {
     @Override
     public void remove(DataBox key) {
         // TODO(proj2): implement
-
+        int index = numLessThanEqual(key, keys);
+        BPlusNode child = getChild(index);
+        child.remove(key);
         return;
     }
 
