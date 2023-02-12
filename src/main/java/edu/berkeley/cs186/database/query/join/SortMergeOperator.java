@@ -140,48 +140,39 @@ public class SortMergeOperator extends JoinOperator {
          * or null if there are no more records to join.
          */
         private Record fetchNextRecord() {
-            if (leftRecord == null || rightRecord == null) {
-                return null;
-            }
-            if (compare(leftRecord, rightRecord) == 0) {
-                // if matched, set checkpoint, advance right and return concat record
-                Record record = leftRecord.concat(rightRecord);
-                if (!this.marked) {
-                    rightIterator.markPrev();
-                    this.marked = true;
-                }
-                if (!rightIterator.hasNext()) {
-                    if (!leftIterator.hasNext()) {
-                        return null;
-                    }
+            // TODO(proj3_part1): implement
+            if (leftRecord == null) return null;
+            Record result;
+            if (!this.marked) {
+                while (compare(leftRecord, rightRecord) < 0) {
+                    if (!leftIterator.hasNext()) return null;
                     leftRecord = leftIterator.next();
-                } else {
+                }
+                while (compare(leftRecord, rightRecord) > 0) {
+                    if (!rightIterator.hasNext()) return null;
                     rightRecord = rightIterator.next();
                 }
-
-                return record;
-            } else if (compare(leftRecord, rightRecord) < 0) {
-                // if left smaller, advance left and reset right
-                if (!leftIterator.hasNext()) {
-                    return null;
-                }
-                leftRecord = leftIterator.next();
-                rightIterator.reset();
-                if (!rightIterator.hasNext()) {
-                    return null;
-                }
-                rightRecord = rightIterator.next();
-                fetchNextRecord();
-            } else if (compare(leftRecord, rightRecord) > 0) {
-                // if left larger, advance right
-                if (!rightIterator.hasNext()) {
-                    return null;
-                }
-                rightRecord = rightIterator.next();
-                this.marked = false;
-                fetchNextRecord();
+                rightIterator.markPrev();
+                this.marked = true;
             }
-            return null;
+            if (compare(leftRecord, rightRecord) == 0) {
+                result = leftRecord.concat(rightRecord);
+                if (rightIterator.hasNext()) rightRecord = rightIterator.next();
+                else {
+                    rightIterator.reset();
+                    rightRecord = rightIterator.next();
+                    if (leftIterator.hasNext()) leftRecord = leftIterator.next();
+                    else leftRecord = null;
+                }
+                return result;
+            } else {
+                rightIterator.reset();
+                rightRecord = rightIterator.next();
+                if (leftIterator.hasNext()) leftRecord = leftIterator.next();
+                else leftRecord = null;
+                this.marked = false;
+                return fetchNextRecord();
+            }
         }
 
         @Override
