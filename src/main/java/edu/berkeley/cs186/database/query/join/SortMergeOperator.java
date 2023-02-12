@@ -2,6 +2,7 @@ package edu.berkeley.cs186.database.query.join;
 
 import edu.berkeley.cs186.database.TransactionContext;
 import edu.berkeley.cs186.database.common.iterator.BacktrackingIterator;
+import edu.berkeley.cs186.database.memory.Page;
 import edu.berkeley.cs186.database.query.JoinOperator;
 import edu.berkeley.cs186.database.query.MaterializeOperator;
 import edu.berkeley.cs186.database.query.QueryOperator;
@@ -139,7 +140,47 @@ public class SortMergeOperator extends JoinOperator {
          * or null if there are no more records to join.
          */
         private Record fetchNextRecord() {
-            // TODO(proj3_part1): implement
+            if (leftRecord == null || rightRecord == null) {
+                return null;
+            }
+            if (compare(leftRecord, rightRecord) == 0) {
+                // if matched, set checkpoint, advance right and return concat record
+                Record record = leftRecord.concat(rightRecord);
+                if (!this.marked) {
+                    rightIterator.markPrev();
+                    this.marked = true;
+                }
+                if (!rightIterator.hasNext()) {
+                    if (!leftIterator.hasNext()) {
+                        return null;
+                    }
+                    leftRecord = leftIterator.next();
+                } else {
+                    rightRecord = rightIterator.next();
+                }
+
+                return record;
+            } else if (compare(leftRecord, rightRecord) < 0) {
+                // if left smaller, advance left and reset right
+                if (!leftIterator.hasNext()) {
+                    return null;
+                }
+                leftRecord = leftIterator.next();
+                rightIterator.reset();
+                if (!rightIterator.hasNext()) {
+                    return null;
+                }
+                rightRecord = rightIterator.next();
+                fetchNextRecord();
+            } else if (compare(leftRecord, rightRecord) > 0) {
+                // if left larger, advance right
+                if (!rightIterator.hasNext()) {
+                    return null;
+                }
+                rightRecord = rightIterator.next();
+                this.marked = false;
+                fetchNextRecord();
+            }
             return null;
         }
 
