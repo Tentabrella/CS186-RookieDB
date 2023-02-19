@@ -21,9 +21,15 @@ public enum LockType {
         if (a == null || b == null) {
             throw new NullPointerException("null lock type");
         }
-        // TODO(proj4_part1): implement
-
-        return false;
+        switch (a) {
+            case NL: return true;
+            case IS: return b != X;
+            case IX: return b == NL || b == IS || b == IX;
+            case S: return b == NL || b == IS || b == S;
+            case SIX: return b == NL || b == IS;
+            case X: return b == NL;
+            default: throw new UnsupportedOperationException("bad lock type");
+        }
     }
 
     /**
@@ -53,9 +59,15 @@ public enum LockType {
         if (parentLockType == null || childLockType == null) {
             throw new NullPointerException("null lock type");
         }
-        // TODO(proj4_part1): implement
-
-        return false;
+        switch (parentLockType) {
+            case NL: return childLockType == NL;
+            case IS: return childLockType == NL || childLockType == IS || childLockType == S;
+            case IX: return true;
+            case S: return childLockType == NL;
+            case SIX: return childLockType == NL || childLockType == X || childLockType == IX;
+            case X: return childLockType == NL;
+            default: throw new UnsupportedOperationException("bad lock type");
+        }
     }
 
     /**
@@ -68,9 +80,15 @@ public enum LockType {
         if (required == null || substitute == null) {
             throw new NullPointerException("null lock type");
         }
-        // TODO(proj4_part1): implement
-
-        return false;
+        switch (substitute) {
+            case NL: return required == NL;
+            case IS: return required == NL || required == IS;
+            case IX: return required == NL || required == IS || required == IX;
+            case S : return required == NL || required == IS || required == S;
+            case SIX : return !(required == X);
+            case X : return true;
+            default: throw new UnsupportedOperationException("bad lock type");
+        }
     }
 
     /**
