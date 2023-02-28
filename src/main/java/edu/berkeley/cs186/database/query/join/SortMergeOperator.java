@@ -140,7 +140,6 @@ public class SortMergeOperator extends JoinOperator {
          * or null if there are no more records to join.
          */
         private Record fetchNextRecord() {
-            // TODO(proj3_part1): implement
             if (leftRecord == null) return null;
             Record result;
             if (!this.marked) {

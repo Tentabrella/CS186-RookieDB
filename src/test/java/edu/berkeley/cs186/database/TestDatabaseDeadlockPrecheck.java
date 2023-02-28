@@ -3,6 +3,7 @@ package edu.berkeley.cs186.database;
 import edu.berkeley.cs186.database.categories.Proj4Part2Tests;
 import edu.berkeley.cs186.database.categories.Proj4Tests;
 import edu.berkeley.cs186.database.categories.PublicTests;
+import edu.berkeley.cs186.database.concurrency.LockContext;
 import edu.berkeley.cs186.database.concurrency.LockType;
 import edu.berkeley.cs186.database.concurrency.LoggingLockManager;
 import edu.berkeley.cs186.database.concurrency.ResourceName;

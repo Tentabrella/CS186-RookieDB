@@ -188,7 +188,6 @@ class LeafNode extends BPlusNode {
     @Override
     public Optional<Pair<DataBox, Long>> bulkLoad(Iterator<Pair<DataBox, RecordId>> data,
             float fillFactor) {
-        // TODO(proj2): implement
         // load the data into leaf until overflow or data have no next
         while (data.hasNext()) {
             Pair<DataBox, RecordId> record = data.next();
@@ -218,7 +217,6 @@ class LeafNode extends BPlusNode {
     // See BPlusNode.remove.
     @Override
     public void remove(DataBox key) {
-        // TODO(proj2): implement
         int index = keys.indexOf(key);
         if (index != -1) {
             keys.remove(index);

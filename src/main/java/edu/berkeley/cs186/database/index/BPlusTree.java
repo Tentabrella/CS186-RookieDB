@@ -83,6 +83,7 @@ public class BPlusTree {
      *   - the partition number of the tree,
      *   - the page number of the root of the tree.
      *
+     *
      * All pages allocated on the given partition are serializations of inner and leaf nodes.
      */
     public BPlusTree(BufferManager bufferManager, BPlusTreeMetadata metadata, LockContext lockContext) {

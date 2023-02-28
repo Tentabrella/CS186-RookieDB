@@ -1,5 +1,6 @@
 package edu.berkeley.cs186.database.concurrency;
 
+import com.sun.xml.internal.bind.v2.TODO;
 import edu.berkeley.cs186.database.TransactionContext;
 
 import java.util.*;
@@ -254,8 +255,8 @@ public class LockManager {
         Lock lock = new Lock(name, lockType, transaction.getTransNum());
         synchronized (this) {
             ResourceEntry resourceEntry = getResourceEntry(name);
-            if (getLockType(transaction, name) == lockType) {
-                throw new DuplicateLockRequestException(String.format("resource: %s has already grant lock %s", name, lockType));
+            if (!getLockType(transaction, name).equals(LockType.NL)) {
+                throw new DuplicateLockRequestException(String.format("resource: %s has already grant lock", name));
             } else if (resourceEntry.waitingQueue.size() > 0 || !resourceEntry.checkCompatible(lockType, transaction.getTransNum())) {
                 // if not compatible or entry has a queue, add to back of queue
                 resourceEntry.addToQueue(new LockRequest(transaction, lock), false);

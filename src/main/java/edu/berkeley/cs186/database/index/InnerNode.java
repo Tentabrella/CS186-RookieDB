@@ -146,7 +146,6 @@ class InnerNode extends BPlusNode {
     @Override
     public Optional<Pair<DataBox, Long>> bulkLoad(Iterator<Pair<DataBox, RecordId>> data,
             float fillFactor) {
-        // TODO(proj2): implement
         while (data.hasNext()) {
             // let the children bulkLoad and accept its pair
             BPlusNode rightmostChild = this.getChild(this.children.size() - 1);
@@ -164,7 +163,6 @@ class InnerNode extends BPlusNode {
     // See BPlusNode.remove.
     @Override
     public void remove(DataBox key) {
-        // TODO(proj2): implement
         int index = numLessThanEqual(key, keys);
         BPlusNode child = getChild(index);
         child.remove(key);
