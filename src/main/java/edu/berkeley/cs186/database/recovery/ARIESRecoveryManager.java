@@ -7,6 +7,7 @@ import edu.berkeley.cs186.database.io.DiskSpaceManager;
 import edu.berkeley.cs186.database.memory.BufferManager;
 import edu.berkeley.cs186.database.memory.Page;
 import edu.berkeley.cs186.database.recovery.records.*;
+import edu.berkeley.cs186.database.table.Record;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -92,8 +93,12 @@ public class ARIESRecoveryManager implements RecoveryManager {
      */
     @Override
     public long commit(long transNum) {
-        // TODO(proj5): implement
-        return -1L;
+        // write commit log and flush record
+        long lsn = appendLogHelper(new CommitTransactionLogRecord(transNum, transactionTable.get(transNum).lastLSN));
+        logManager.flushToLSN(lsn);
+        // change status to commit
+        transactionTable.get(transNum).transaction.setStatus(Transaction.Status.COMMITTING);
+        return lsn;
     }
 
     /**
@@ -108,8 +113,11 @@ public class ARIESRecoveryManager implements RecoveryManager {
      */
     @Override
     public long abort(long transNum) {
-        // TODO(proj5): implement
-        return -1L;
+        // write abort log no need to flush
+        long lsn = appendLogHelper(new AbortTransactionLogRecord(transNum, transactionTable.get(transNum).lastLSN));
+        // change status to abort
+        transactionTable.get(transNum).transaction.setStatus(Transaction.Status.ABORTING);
+        return lsn;
     }
 
     /**
@@ -126,8 +134,24 @@ public class ARIESRecoveryManager implements RecoveryManager {
      */
     @Override
     public long end(long transNum) {
-        // TODO(proj5): implement
-        return -1L;
+        // perform rollback if abort
+        if (transactionTable.get(transNum).transaction.getStatus() == Transaction.Status.ABORTING) {
+            long lastLSN = transactionTable.get(transNum).lastLSN;
+            Optional<Long> prevLSN = Optional.of(lastLSN);
+            LogRecord logRecord;
+            do {
+                logRecord = logManager.fetchLogRecord(prevLSN.get());
+                prevLSN = logRecord.getPrevLSN();
+            } while (prevLSN.isPresent());
+            rollbackToLSN(transNum, logRecord.getLSN());
+        }
+        // write complete log no need to flush
+        long lsn = appendLogHelper(new EndTransactionLogRecord(transNum, transactionTable.get(transNum).lastLSN));
+        // change status to end
+        transactionTable.get(transNum).transaction.setStatus(Transaction.Status.COMPLETE);
+        // remove from transaction table
+        transactionTable.remove(transNum);
+        return lsn;
     }
 
     /**
@@ -155,7 +179,37 @@ public class ARIESRecoveryManager implements RecoveryManager {
         // back from the next record that hasn't yet been undone.
         long currentLSN = lastRecord.getUndoNextLSN().orElse(lastRecordLSN);
         // TODO(proj5) implement the rollback logic described above
+        while (currentLSN > LSN) {
+            LogRecord logRecord = logManager.fetchLogRecord(currentLSN);
+            if (logRecord.isUndoable()) {
+                // generate undo, append to log
+                LogRecord undoRecord = logRecord.undo(transactionTable.get(transNum).lastLSN);
+                appendLogHelper(undoRecord);
+                undoRecord.redo(this, this.diskSpaceManager, this.bufferManager);
+            }
+            if (logRecord.getPrevLSN().isPresent()) {
+                currentLSN = logRecord.getPrevLSN().get();
+            } else {
+                break;
+            }
+        }
     }
+
+    /**
+     * Append the record into log and update transaction table
+     * @param record
+     * @return LSN of this record
+     */
+    private long appendLogHelper(LogRecord record) {
+        TransactionTableEntry transactionTableEntry;
+        if (record.getTransNum().isPresent()) {
+            transactionTableEntry = this.transactionTable.get(record.getTransNum().get());
+            transactionTableEntry.lastLSN = this.logManager.appendToLog(record);
+            return transactionTableEntry.lastLSN;
+        }
+        return -1;
+    }
+
 
     /**
      * Called before a page is flushed from the buffer cache. This
@@ -204,8 +258,12 @@ public class ARIESRecoveryManager implements RecoveryManager {
                              byte[] after) {
         assert (before.length == after.length);
         assert (before.length <= BufferManager.EFFECTIVE_PAGE_SIZE / 2);
-        // TODO(proj5): implement
-        return -1L;
+        // wal append log
+        long lsn = appendLogHelper(new UpdatePageLogRecord(transNum, pageNum, this.transactionTable.get(transNum).lastLSN,
+                pageOffset, before, after));
+        // update dpt if null
+        this.dirtyPageTable.putIfAbsent(pageNum, lsn);
+        return lsn;
     }
 
     /**
